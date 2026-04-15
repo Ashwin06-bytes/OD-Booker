@@ -1,9 +1,9 @@
 @import url(https://fonts.googleapis.com/css?family=Poppins:100,100italic,200,200italic,300,300italic,regular,italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic);
 
 :root {
-  --primary-color: #8e04e4;
+  --primary-color: #044fe4;
   --text-color: #1d1d1d;
-  --bg-color: #f1f1fb;
+  --bg-color: #8af4e2;
 }
 
 * {
@@ -320,4 +320,18 @@ body {
   background-color: #eee !important;
   color: #999 !important;
   pointer-events: none;
+}
+body {
+  font-family: 'Inter', sans-serif;
+}
+.od-header {
+  text-align: center;
+  margin-bottom: 10px;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.od-header h2 {
+  font-size: 50px;
+  font-weight: 600;
+  color: #26057b; 
 }
