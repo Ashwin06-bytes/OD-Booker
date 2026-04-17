@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Poppins:100,100italic,200,200italic,300,300italic,regular,italic,500,500italic,600,600italic,700,700italic,800,800italic,900,900italic);
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
 
 :root {
   --primary-color: #044fe4;
@@ -6,6 +6,7 @@
   --bg-color: #8af4e2;
 }
 
+/* RESET */
 * {
   margin: 0;
   padding: 0;
@@ -14,137 +15,171 @@
 }
 
 body {
-  background-color: #fff;
+  display: block;
 }
 
+html, body {
+  height: 100%;
+  background: #fff;
+}
+
+/* FULL SCREEN FIX */
 .container {
   width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: auto;
+  display: block;
 }
 
+/* CALENDAR */
 .calendar {
   width: 100%;
-  max-width: 900px;
-  padding: 30px 20px;
-  border-radius: 10px;
-  background-color: var(--bg-color);
+  min-height: auto;
+  padding: 10px;
+  background: var(--bg-color);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
+/* HEADER */
 .calendar .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #ccc;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ccc;
 }
 
 .calendar .header .month {
-  font-size: 25px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--text-color);
 }
 
-.calendar .header .btns {
+.calendar .btns {
   display: flex;
-  gap: 10px;
+  gap: 6px;
 }
 
-.calendar .header .btns .btn {
-  width: 50px;
-  height: 40px;
+.calendar .btn {
+  width: 36px;
+  height: 32px;
+  border-radius: 6px;
+  background: var(--primary-color);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 5px;
-  color: #fff;
-  background-color: var(--primary-color);
   cursor: pointer;
-  transition: 0.3s;
+  transition: 0.2s;
 }
 
-.calendar .header .btns .btn:hover {
-  background-color: #db0933;
-  transform: scale(1.05);
+.calendar .btn:active {
+  transform: scale(0.9);
 }
 
+/* WEEKDAYS */
 .weekdays {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 4px;
+  margin-bottom: 4px;
 }
 
 .weekdays .day {
-  width: calc(100% / 7 - 10px);
+  width: calc(100% / 7 - 4px);
   text-align: center;
+  font-size: 11px;
   font-weight: 600;
 }
 
+/* DAYS GRID */
 .days {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 4px;
 }
 
+/* DAY BOX */
 .days .day {
-  width: calc(100% / 7 - 10px);
-  height: 100px;
-  padding: 8px;
-  border-radius: 5px;
-  background-color: #fff;
-  font-size: 14px;
+  width: calc(100% / 7 - 4px);
+  height: 68px;
+  padding: 4px;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  border: 1px solid rgba(0,0,0,0.05);
   overflow: hidden;
-  overflow-y: auto;
+  transition: 0.2s;
 }
 
-.days .day small {
-  font-size: 11px;
+/* DATE NUMBER */
+.days .day div {
   font-weight: 600;
+  font-size: 12px;
 }
 
-.days .day:hover:not(.next):not(.prev) {
-  background-color: var(--primary-color);
+/* HOVER */
+.days .day:not(.prev):not(.next):not(.disabled-day):hover {
+  background: var(--primary-color);
   color: #fff;
+  transform: scale(1.03);
 }
 
+.days .day.past-booked {
+  background-color: #ffc107 !important;
+  color: #000;
+  border: 2px solid #ff9800;
+}
+
+.past-booked {
+  background-color: #ffc107 !important;
+  color: #000;
+}
+
+/* TODAY */
 .days .day.today {
-  background-color: var(--primary-color);
-  color: #fff;
+  background: var(--primary-color);
+  color: #ffffff;
 }
 
+/* DISABLED */
+.days .day.prev,
 .days .day.next,
-.days .day.prev {
-  color: #ccc;
+.disabled-day {
+  background: hsl(0, 0%, 96%);
+  color: #aaa;
+  pointer-events: none;
 }
 
-/* 🎨 STATUS COLORS */
+/* STATUS COLORS */
 .days .day.full-day {
-  background-color: #ff4d4d !important;
+  background: #ff4d4d !important;
   color: #fff;
-  border: 2px solid red;
 }
 
 .days .day.partial-day {
-  background-color: #4caf50 !important;
+  background: #4caf50 !important;
   color: #fff;
-  border: 2px solid green;
 }
 
-/* NAME STYLE */
+/* NAME DISPLAY (COMPACT) */
 .name-row {
-  font-size: 11px;
+  font-size: 9px;
+  color: rgba(0,0,0,0.7);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* POPUP BACKGROUND */
+/* SLOT INFO */
+.slot-info {
+  font-size: 8px;
+  margin-top: 2px;
+}
+
+/* POPUP */
 .popup {
   position: fixed;
   top: 0;
@@ -160,34 +195,35 @@ body {
 /* POPUP BOX */
 .popup-content {
   background: #fff;
-  padding: 20px;
+  padding: 15px;
   border-radius: 10px;
-  width: 300px;
+  width: 90%;
+  max-width: 300px;
   text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  animation: popupFade 0.2s ease;
 }
 
-/* LIST IN POPUP */
+@keyframes popupFade {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* POPUP LIST */
 #popup-list {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 #popup-list .name-row {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #eeeeee;
+  padding: 4px 0;
 }
 
-/* DELETE BUTTON (X) */
+/* DELETE */
 .delete-mark {
   color: red;
-  cursor: pointer;
-}
-
-/* CLOSE BUTTON */
-.close-btn {
-  float: right;
-  font-size: 20px;
   cursor: pointer;
 }
 
@@ -195,178 +231,136 @@ body {
 .popup-content input {
   width: 100%;
   padding: 8px;
-  margin: 10px 0;
+  margin: 6px 0;
+  border: 1px solid #cccccc;
+  border-radius: 5px;
+}
+
+.popup-content input:focus {
+  outline: none;
+  border: 1px solid var(--primary-color);
 }
 
 /* BUTTON */
 .popup-content button {
-  padding: 8px 15px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
   background: var(--primary-color);
-  color: #fff;
+  color: #ffffff;
   border: none;
-  cursor: pointer;
+  border-radius: 5px;
 }
 
-/* DELETE BUTTON */
-#delete-btn {
-  margin-top: 10px;
-  background: red;
-  color: white;
-}
-
-/* Credits */
-.credits a {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0;
-  color: #aaa;
-}
-
-.credits span {
-  color: var(--primary-color);
-}
-
-/* 📱 MOBILE RESPONSIVE */
-@media (max-width: 768px) {
-
-  .calendar {
-    padding: 15px 10px;
-  }
-
-  .calendar .header {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .calendar .header .month {
-    font-size: 20px;
-  }
-
-  .calendar .header .btns {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .calendar .header .btns .btn {
-    width: 40px;
-    height: 35px;
-    font-size: 14px;
-  }
-
-  .weekdays .day {
-    font-size: 12px;
-  }
-
-  .days .day {
-    height: 80px;
-    font-size: 12px;
-    padding: 5px;
-  }
-
-  .name-row {
-    font-size: 10px;
-  }
-
-  .days .day small {
-    font-size: 10px;
-  }
-}
-
-/* 📱 SMALL PHONES */
-@media (max-width: 480px) {
-
-  .calendar {
-    padding: 10px 5px;
-  }
-
-  .days {
-    gap: 5px;
-  }
-
-  .weekdays {
-    gap: 5px;
-  }
-
-  .weekdays .day,
-  .days .day {
-    width: calc(100% / 7 - 5px);
-  }
-
-  .days .day {
-    height: 70px;
-    font-size: 11px;
-  }
-
-  .calendar .header .month {
-    font-size: 18px;
-  }
-
-  .popup-content {
-    width: 90%;
-  }
-
-  .popup-content input {
-    font-size: 14px;
-  }
-
-  .popup-content button {
-    width: 100%;
-  }
-}
-.disabled-day {
-  background-color: #eee !important;
-  color: #999 !important;
-  pointer-events: none;
-}
-body {
-  font-family: 'Inter', sans-serif;
-}
+/* HEADER TITLE */
 .od-header {
   text-align: center;
-  margin-bottom: 10px;
-  font-family: 'Montserrat', sans-serif;
+  padding: 8px 0;
 }
 
 .od-header h2 {
-  font-size: 50px;
-  font-weight: 600;
-  color: #26057b; 
+  font-size: 24px;
+  color: #26057b;
 }
+
+/* NAVBAR */
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: #8e04e4;
+  padding: 8px 10px;
+  background: #1a002a;
   color: white;
 }
 
-/* Navigation */
-nav {
-  display: flex;
-  gap: 20px;
+/* CREDITS */
+.credits {
+  text-align: center;
+  font-size: 11px;
+  padding: 6px;
+  color: #555;
 }
 
-/* Mobile view */
-@media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    align-items: flex-start;
+.credit-logo {
+  width: 16px;
+  vertical-align: middle;
+  margin: 0 4px;
+}
+
+.credits a {
+  color: #555;
+  text-decoration: none;
+  transition: 0.2s;
+  cursor: pointer;
+}
+
+.credits a:hover {
+  color: #0077B5;
+}
+
+/* 🖨️ PRINT BUTTON - RECTANGLE STYLE */
+.print-btn {
+  position: absolute;
+  right: 15px;
+  top: 15px;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  background: #ff9800;
+  color: #040000;
+
+  border: 2px solid #e68900;   /* ✅ border added */
+  border-radius: 6px;          /* ✅ rectangle shape */
+
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+/* hover */
+.print-btn:hover {
+  background: #e68900;
+  border-color: #cc7700;
+}
+
+/* icon size */
+.print-btn i {
+  font-size: 14px;
+}
+
+/* Hover */
+.print-btn:hover {
+  background: #e68900;
+}
+
+/* HEADER FIX */
+.od-header {
+  position: relative;
+  text-align: center;
+  padding: 10px;
+}
+
+
+.print-btn {
+  background-color: #ff9800; /* orange */
+}
+
+.print-btn:hover {
+  background-color: #e68900;
+}
+
+/* 📱 EXTRA SMALL DEVICES */
+@media (max-width: 400px) {
+  .days .day {
+    height: 60px;
+    font-size: 10px;
   }
 
-  nav {
-    flex-direction: column;
-    width: 100%;
-    gap: 10px;
-    margin-top: 10px;
+  .calendar .header .month {
+    font-size: 16px;
   }
 
-  nav a {
-    padding: 10px;
-    width: 100%;
-    display: block;
-  }
+
 }

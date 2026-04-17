@@ -1,90 +1,104 @@
 <!DOCTYPE html>
-<div class="od-header">
-  <h2>OD Booker</h2>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</div>
-
-<div class="calendar-container">
-
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- STYLESHEET -->
-    <link rel="stylesheet" href="style.css" />
+  <title>OD Booker</title>
 
-    <!-- FONTAWESOME -->
-     <link 
-     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
-    />
-    <title>Mini Calendar</title>
-  </head>
-  <body>
-    <div class="container">
-      <div class="calendar">
-        <div class="header">
-          <div class="month"></div>
-          <div class="btns">
-            <div class="btn today-btn">
-              <i class="fas fa-calendar-day"></i>
-            </div>
-            <div class="btn prev-btn">
-              <i class="fas fa-chevron-left"></i>
-            </div>
-            <div class="btn next-btn">
-              <i class="fas fa-chevron-right"></i>
-            </div>
+  <!-- STYLES -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- FONTS -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- ICONS -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+  />
+</head>
+
+<body>
+
+  <!-- 🔥 HEADER -->
+  <div class="od-header">
+    <h2>OD Booker</h2>
+
+    <!-- 🖨️ PRINT BUTTON WITH ICON -->
+    <button id="print-btn" class="print-btn">
+      <i class="fas fa-print"></i>
+    </button>
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="container">
+    <div class="calendar">
+
+      <div class="header">
+        <div class="month"></div>
+
+        <div class="btns">
+          <div class="btn today-btn">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+
+          <div class="btn prev-btn">
+            <i class="fas fa-chevron-left"></i>
+          </div>
+
+          <div class="btn next-btn">
+            <i class="fas fa-chevron-right"></i>
           </div>
         </div>
-        <div class="weekdays">
-          <div class="day">Sun</div>
-          <div class="day">Mon</div>
-          <div class="day">Tue</div>
-          <div class="day">Wed</div>
-          <div class="day">Thu</div>
-          <div class="day">Fri</div>
-          <div class="day">Sat</div>
-        </div>
-        <div class="days">
-          <!-- lets add days using js -->
-        </div>
       </div>
+
+      <!-- WEEK DAYS -->
+      <div class="weekdays">
+        <div class="day">Sun</div>
+        <div class="day">Mon</div>
+        <div class="day">Tue</div>
+        <div class="day">Wed</div>
+        <div class="day">Thu</div>
+        <div class="day">Fri</div>
+        <div class="day">Sat</div>
+      </div>
+
+      <!-- DAYS -->
+      <div class="days"></div>
+
     </div>
+  </div>
 
-    <!-- Credits -->
-    <div class="credits">
-      <a href="https://www.youtube.com/channel/UCiUtBDVaSmMGKxg1HYeK-BQ">
-        Created with <span><i class="fas fa-heart"></i></span> by
-        <span>Open Source Coding</span>
-      </a>
+  <!-- POPUP -->
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <span class="close-btn">&times;</span>
+
+      <h3 id="selected-date">Selected Date</h3>
+
+      <!-- LIST -->
+      <div id="popup-list"></div>
+
+      <!-- INPUTS -->
+      <input type="text" id="name-input" placeholder="Enter name" />
+      <input type="text" id="event-input" placeholder="Enter event" />
+
+      <button id="save-btn">Save</button>
     </div>
+  </div>
 
-   
-    <!-- POPUP -->
-<div class="popup" id="popup">
- <div class="popup-content">
-  <span class="close-btn">&times;</span>
+  <!-- CREDITS -->
+  <div class="credits">
+    <a href="https://www.linkedin.com/in/ashwinsenthil" target="_blank" rel="noopener noreferrer">
+      Created by 
+      <img src="logo.png" alt="Ashwin Logo" class="credit-logo">
+      Ashwin S
+    </a>
+  </div>
 
-  <h3 id="selected-date">Selected Date</h3>
+  <!-- SCRIPT -->
+  <script src="script.js"></script>
 
-  <!-- ✅ LIST FIRST -->
-  <div id="popup-list"></div>
-
-  <!-- ✅ THEN INPUTS -->
-  <input type="text" id="name-input" placeholder="Enter name" />
-  <input type="text" id="event-input" placeholder="Enter event" />
-
-  <button id="save-btn">Save</button>
-</div>
-</div>
- <!-- SCRIPT -->
-    <script src="script.js"></script>
-  </body>
-    
-</div>
+</body>
 </html>
