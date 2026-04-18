@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const API_URL = "https://script.google.com/macros/s/AKfycbz8JBmEGJGqKuz3rEZfkPQsyndPaVcAN4K-zmJUaTdk5l4WFvgNyHLfEWML2chY9J3g9w/exec";
 
   const nameInput  = document.getElementById("name-input");
+  const regNoInput = document.getElementById("reg-no-input");
   const eventInput = document.getElementById("event-input");
   const saveBtn    = document.getElementById("save-btn");
   const printBtn   = document.getElementById("print-btn");
@@ -223,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Always clear inputs when popup opens
     nameInput.value  = "";
+    regNoInput.value = "";
     eventInput.value = "";
 
     popup.style.display = "flex";
@@ -240,9 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // ─────────────────────────────────────────────
   saveBtn.onclick = async () => {
     const name      = nameInput.value.trim();
+    const regNo     = regNoInput.value.trim();
     const eventText = eventInput.value.trim();
 
-    if (!name || !eventText) { alert("Please fill in both fields."); return; }
+    if (!name || !regNo || !eventText) { alert("Please fill in all fields."); return; }
     if (!selectedDay)        { alert("Select a date first.");        return; }
 
     // Frontend duplicate / full check
@@ -268,6 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const saveUrl = `${API_URL}?action=save`
         + `&date=${encodeURIComponent(dateStr)}`
         + `&name=${encodeURIComponent(name)}`
+        + `&reg_no=${encodeURIComponent(regNo)}`
         + `&event=${encodeURIComponent(eventText)}`
         + `&month=${encodeURIComponent(months[parseInt(m)])}`
         + `&year=${encodeURIComponent(y)}`;
