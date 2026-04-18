@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const MAX_SLOTS = 5;
 
-  const FLASK_API_URL = window.FLASK_API_URL || "http://localhost:5000";
+  const FLASK_API_URL = "https://od-booker.onrender.com";
 
   const API_URL = "https://script.google.com/macros/s/AKfycbz8JBmEGJGqKuz3rEZfkPQsyndPaVcAN4K-zmJUaTdk5l4WFvgNyHLfEWML2chY9J3g9w/exec";
 
