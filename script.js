@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const MAX_SLOTS = 5;
 
+  const FLASK_API_URL = window.FLASK_API_URL || "http://localhost:5000";
 
   const API_URL = "https://script.google.com/macros/s/AKfycbz8JBmEGJGqKuz3rEZfkPQsyndPaVcAN4K-zmJUaTdk5l4WFvgNyHLfEWML2chY9J3g9w/exec";
 
@@ -20,6 +21,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectedDate = document.getElementById("selected-date");
   const closeBtn     = document.querySelector(".close-btn");
   const popupList    = document.getElementById("popup-list");
+
+  // Print Dropdown Elements
+  const printDropdown = document.getElementById("print-dropdown");
+  const generatePdfBtn = document.getElementById("generate-pdf-btn");
+  const printFilterSelect = document.getElementById("print-filter-select");
+  
+  const printDateInputs = document.getElementById("print-date-inputs");
+  const printNameInputs = document.getElementById("print-name-inputs");
+  const printMonthlyInputs = document.getElementById("print-monthly-inputs");
+
+  const printSingleDate = document.getElementById("print-single-date");
+  const printName = document.getElementById("print-name");
+  const printDateFrom = document.getElementById("print-date-from");
+  const printDateTo = document.getElementById("print-date-to");
+  const printMonth = document.getElementById("print-month");
 
   const months = [
     "January","February","March","April","May","June",
@@ -286,8 +302,127 @@ document.addEventListener("DOMContentLoaded", () => {
     saveBtn.textContent = "Save";
   };
 
-  // PRINT
-  printBtn.onclick = () => window.print();
+  // ─────────────────────────────────────────────
+  // PRINT DROPDOWN & PDF GENERATION
+  // ─────────────────────────────────────────────
+  printBtn.onclick = (e) => {
+    e.stopPropagation();
+    
+    // Toggle dropdown
+    const isVisible = printDropdown.style.display === "flex";
+    if (isVisible) {
+      printDropdown.style.display = "none";
+      return;
+    }
+
+    // Set defaults: today's date for 'date', current month for 'monthly'
+    const today = new Date();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const yyyy = today.getFullYear();
+    
+    printSingleDate.value = `${yyyy}-${mm}-${dd}`;
+    
+    // Set current month currently displayed in calendar calendar
+    const calMonth = String(currentMonth + 1).padStart(2, "0");
+    printMonth.value = `${currentYear}-${calMonth}`;
+    
+    // Reset date range
+    printDateFrom.value = "";
+    printDateTo.value = "";
+    printName.value = "";
+    
+    // Reset selection to default (date)
+    printFilterSelect.value = "date";
+    printDateInputs.style.display = "block";
+    printNameInputs.style.display = "none";
+    printMonthlyInputs.style.display = "none";
+
+    printDropdown.style.display = "flex";
+  };
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".print-wrapper")) {
+      printDropdown.style.display = "none";
+    }
+  });
+  
+  // Prevent closing when clicking inside dropdown
+  printDropdown.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Toggle filter inputs visibility
+  printFilterSelect.addEventListener("change", (e) => {
+    printDateInputs.style.display = "none";
+    printNameInputs.style.display = "none";
+    printMonthlyInputs.style.display = "none";
+
+    if (e.target.value === "date") {
+      printDateInputs.style.display = "block";
+    } else if (e.target.value === "name") {
+      printNameInputs.style.display = "block";
+    } else if (e.target.value === "monthly") {
+      printMonthlyInputs.style.display = "block";
+    }
+  });
+
+  generatePdfBtn.onclick = async () => {
+    const filterType = printFilterSelect.value;
+    let payload = { filter: filterType };
+
+    if (filterType === "date") {
+      if (!printSingleDate.value) return alert("Please select a date.");
+      const [y, m, d] = printSingleDate.value.split("-");
+      payload.date = `${d}-${m}-${y}`;
+    } else if (filterType === "name") {
+      if (!printName.value || !printDateFrom.value || !printDateTo.value) {
+        return alert("Please enter name and select both From and To dates.");
+      }
+      const [fy, fm, fd] = printDateFrom.value.split("-");
+      const [ty, tm, td] = printDateTo.value.split("-");
+      payload.name = printName.value.trim();
+      payload.from = `${fd}-${fm}-${fy}`;
+      payload.to = `${td}-${tm}-${ty}`;
+    } else if (filterType === "monthly") {
+      if (!printMonth.value) return alert("Please select a month.");
+      const [y, m] = printMonth.value.split("-");
+      payload.month = months[parseInt(m) - 1];
+      payload.year = y;
+    }
+
+    generatePdfBtn.disabled = true;
+    generatePdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+
+    try {
+      const response = await fetch(`${FLASK_API_URL}/generate-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Failed to generate PDF");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `OD_Report_${filterType}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      printDropdown.style.display = "none";
+    } catch (err) {
+      console.error(err);
+      alert("Error generating PDF. Make sure the backend API is running.");
+    } finally {
+      generatePdfBtn.disabled = false;
+      generatePdfBtn.innerHTML = '<i class="fas fa-download"></i> Generate PDF';
+    }
+  };
 
   // AUTO SYNC every 10 seconds
   setInterval(loadEvents, 10000);

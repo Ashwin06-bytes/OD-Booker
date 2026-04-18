@@ -295,12 +295,14 @@ header {
   color: #0077B5;
 }
 
-/* 🖨️ PRINT BUTTON - RECTANGLE STYLE */
-.print-btn {
+/* 🖨️ PRINT DROPDOWN SYSTEM */
+.print-wrapper {
   position: absolute;
   right: 15px;
   top: 15px;
+}
 
+.print-btn {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -335,20 +337,100 @@ header {
   background: #e68900;
 }
 
-/* HEADER FIX */
-.od-header {
-  position: relative;
-  text-align: center;
+/* DROPDOWN MENU */
+.print-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  width: 250px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  padding: 15px;
+  display: none; /* hidden by default */
+  flex-direction: column;
+  z-index: 100;
+  text-align: left;
+  border: 1px solid #eee;
+  animation: ddFadeIn 0.2s ease;
+}
+
+@keyframes ddFadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.print-dropdown h4 {
+  margin-bottom: 12px;
+  color: #333;
+  font-size: 14px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dd-group {
+  margin-bottom: 10px;
+}
+
+.dd-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.print-dropdown select,
+.print-dropdown input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  background: #f9f9f9;
+}
+
+.print-dropdown select:focus,
+.print-dropdown input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: #fff;
+}
+
+.dd-date-row {
+  display: flex;
+  gap: 6px;
+}
+
+.dd-generate-btn {
+  width: 100%;
   padding: 10px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: 0.2s;
 }
 
-
-.print-btn {
-  background-color: #ff9800; /* orange */
+.dd-generate-btn:hover {
+  background: #033bb0;
 }
 
-.print-btn:hover {
-  background-color: #e68900;
+.dd-generate-btn:disabled {
+  background: #999;
+  cursor: not-allowed;
 }
 
 /* 📱 EXTRA SMALL DEVICES */

@@ -25,10 +25,46 @@
   <div class="od-header">
     <h2>OD Booker</h2>
 
-    <!-- 🖨️ PRINT BUTTON WITH ICON -->
-    <button id="print-btn" class="print-btn">
-      <i class="fas fa-print"></i>
-    </button>
+    <!-- 🖨️ PRINT DROPDOWN CONTAINER -->
+    <div class="print-wrapper">
+      <button id="print-btn" class="print-btn">
+        <i class="fas fa-print"></i>
+      </button>
+
+      <!-- DROPDOWN MENU -->
+      <div id="print-dropdown" class="print-dropdown">
+        <h4><i class="fas fa-file-pdf"></i> Export Report</h4>
+        
+        <div class="dd-group">
+          <label>Filter By:</label>
+          <select id="print-filter-select">
+            <option value="date">Specific Date</option>
+            <option value="name">Name + Date Range</option>
+            <option value="monthly">Monthly Report</option>
+          </select>
+        </div>
+
+        <div id="print-date-inputs" class="dd-inputs">
+          <input type="date" id="print-single-date" />
+        </div>
+
+        <div id="print-name-inputs" class="dd-inputs" style="display: none;">
+          <input type="text" id="print-name" placeholder="Enter name" />
+          <div class="dd-date-row">
+            <input type="date" id="print-date-from" title="From Date" />
+            <input type="date" id="print-date-to" title="To Date" />
+          </div>
+        </div>
+
+        <div id="print-monthly-inputs" class="dd-inputs" style="display: none;">
+          <input type="month" id="print-month" />
+        </div>
+
+        <button id="generate-pdf-btn" class="dd-generate-btn">
+          <i class="fas fa-download"></i> Generate PDF
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- CALENDAR -->
@@ -91,9 +127,8 @@
   <!-- CREDITS -->
   <div class="credits">
     <a href="https://www.linkedin.com/in/ashwinsenthil" target="_blank" rel="noopener noreferrer">
-      Created by 
+      Powered by 
       <img src="logo.png" alt="Ashwin Logo" class="credit-logo">
-      Ashwin S
     </a>
   </div>
 
