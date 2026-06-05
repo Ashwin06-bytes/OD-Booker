@@ -495,7 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     emailBtn1.href = `https://mail.google.com/mail/?view=cm&to=25cb049@drngpit.ac.in&su=${subject}&body=${body}`;
-    emailBtn2.href = `https://mail.google.com/mail/?view=cm&to=25cb004@drngpit.ac.in&su=${subject}&body=${body}`;
+emailBtn2.href = `https://mail.google.com/mail/?view=cm&to=25cb004@drngpit.ac.in&su=${subject}&body=${body}`;
   }
 
   // Update email links live as user types in the inputs
