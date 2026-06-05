@@ -1,0 +1,255 @@
+// 🔥 MAIN ENTRY — handles READ, SAVE, DELETE via GET
+function doGet(e) {
+  if (e.parameter.action === "save") {
+    return ContentService.createTextOutput(
+      JSON.stringify(saveData({
+        date:   e.parameter.date,
+        name:   e.parameter.name,
+        reg_no: e.parameter.reg_no,
+        event:  e.parameter.event
+      }))
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (e.parameter.action === "delete") {
+    return ContentService.createTextOutput(
+      JSON.stringify(deleteData({
+        date: e.parameter.date,
+        name: e.parameter.name
+      }))
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(
+    JSON.stringify(getAllData())
+  ).setMimeType(ContentService.MimeType.JSON);
+}
+
+// Fallback POST handler
+function doPost(e) {
+  const data = JSON.parse(e.postData.contents);
+
+  if (data.action === "delete") {
+    return ContentService.createTextOutput(
+      JSON.stringify(deleteData(data))
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(
+    JSON.stringify(saveData(data))
+  ).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ─────────────────────────────────────────────
+// 🔧 Parse DD-MM-YYYY format into a valid Date
+// ─────────────────────────────────────────────
+function parseDate(dateStr) {
+  var parts = String(dateStr).split("-");
+  if (parts.length === 3) {
+    var day   = parseInt(parts[0], 10);
+    var month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+    var year  = parseInt(parts[2], 10);
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+      return new Date(year, month, day);
+    }
+  }
+  // Fallback for other formats like YYYY-MM-DD
+  return new Date(dateStr);
+}
+
+// ─────────────────────────────────────────────
+// 🔧 Normalize any date value (string or Date)
+//    to a consistent "DD-MM-YYYY" string.
+//    This fixes the bug where Sheets auto-converts
+//    "08-06-2026" to a Date object (possibly as the
+//    wrong month in US locale), causing a key mismatch
+//    on the frontend calendar.
+// ─────────────────────────────────────────────
+function normalizeDateStr(cellValue) {
+  if (!cellValue) return "";
+
+  // If Sheets already gave us a Date object, format it
+  if (Object.prototype.toString.call(cellValue) === "[object Date]") {
+    return Utilities.formatDate(cellValue, Session.getScriptTimeZone(), "dd-MM-yyyy");
+  }
+
+  // If it's already a "DD-MM-YYYY" style string, return as-is
+  var s = String(cellValue).trim();
+  if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(s)) return s;
+
+  // If it's some other string, try to parse and reformat
+  var d = new Date(s);
+  if (!isNaN(d)) {
+    return Utilities.formatDate(d, Session.getScriptTimeZone(), "dd-MM-yyyy");
+  }
+
+  return s; // return raw if nothing works
+}
+
+// ─────────────────────────────────────────────
+// 🎨 Format header row with highlight
+//    ✅ FIX: Set date column to TEXT format (@)
+//    so Google Sheets NEVER auto-converts "08-06-2026"
+//    to a Date object (which could read DD as month in
+//    US locale, e.g., interpreting June 8 as Aug 6).
+// ─────────────────────────────────────────────
+function formatHeader(sheet) {
+  var header = sheet.getRange(1, 1, 1, 4);
+  header.setValues([["Date", "Name", "Reg No", "Event"]]);
+  header.setBackground("#4285F4");
+  header.setFontColor("#FFFFFF");
+  header.setFontWeight("bold");
+  header.setFontSize(11);
+  header.setHorizontalAlignment("center");
+
+  // ✅ Force entire Date column (col 1) to plain text
+  //    so Sheets never auto-converts date strings
+  sheet.getRange(1, 1, sheet.getMaxRows(), 1).setNumberFormat("@");
+
+  // Set column widths
+  sheet.setColumnWidth(1, 120); // Date
+  sheet.setColumnWidth(2, 150); // Name
+  sheet.setColumnWidth(3, 120); // Reg No
+  sheet.setColumnWidth(4, 200); // Event
+
+  // Freeze header row
+  sheet.setFrozenRows(1);
+}
+
+// 🔥 SAVE DATA
+function saveData(data) {
+  var dateObj   = parseDate(data.date);
+  var monthName = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "MMMM");
+  var year      = dateObj.getFullYear();
+  var sheetName = monthName + "-" + year;
+
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(sheetName);
+
+  // ✅ Create sheet if not exists, with formatted header
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+    formatHeader(sheet);
+  }
+
+  var values = sheet.getDataRange().getValues();
+
+  // ✅ FIX: DUPLICATE CHECK — normalize cell date before comparing.
+  //    Previously `String(dateObject)` gave "Mon Jun 08 2026 ..."
+  //    which never matched "08-06-2026", so duplicates always slipped through.
+  for (var i = 1; i < values.length; i++) {
+    var cellDateStr = normalizeDateStr(values[i][0]);
+    if (
+      cellDateStr === String(data.date) &&
+      String(values[i][1]).toLowerCase() === String(data.name).toLowerCase()
+    ) {
+      return { status: "duplicate" };
+    }
+  }
+
+  // ✅ FIX: Force date column to text format before writing,
+  //    then write data — prevents Sheets from auto-converting the date string.
+  var newRow = sheet.getLastRow() + 1;
+  sheet.getRange(newRow, 1).setNumberFormat("@"); // text-only for date cell
+  sheet.getRange(newRow, 1, 1, 4).setValues([[data.date, data.name, data.reg_no, data.event]]);
+
+  // ✅ SORT BY DATE (text sort works correctly for DD-MM-YYYY when
+  //    zero-padded — but we sort by date object for accuracy)
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 4)
+         .sort({ column: 1, ascending: true });
+  }
+
+  return { status: "success" };
+}
+
+// 🔥 DELETE DATA
+function deleteData(data) {
+  var dateObj   = parseDate(data.date);
+  var monthName = Utilities.formatDate(dateObj, Session.getScriptTimeZone(), "MMMM");
+  var year      = dateObj.getFullYear();
+  var sheetName = monthName + "-" + year;
+
+  var ss    = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(sheetName);
+
+  if (!sheet) return { status: "not_found" };
+
+  var values = sheet.getDataRange().getValues();
+
+  for (var i = 1; i < values.length; i++) {
+    var cellDateStr = normalizeDateStr(values[i][0]);
+    if (
+      cellDateStr === String(data.date) &&
+      String(values[i][1]).toLowerCase() === String(data.name).toLowerCase()
+    ) {
+      sheet.deleteRow(i + 1);
+      return { status: "deleted" };
+    }
+  }
+
+  return { status: "not_found" };
+}
+
+// 🔥 GET ALL DATA
+// ✅ FIX: Use normalizeDateStr() so dates always come back as
+//    "DD-MM-YYYY" strings regardless of how Sheets stored them.
+//    Previously, if Sheets auto-converted "08-06-2026" to a JS Date
+//    (possibly as Aug 6 in US locale), JSON.stringify would emit an
+//    ISO timestamp that the frontend couldn't match to the right calendar key.
+function getAllData() {
+  var ss     = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = ss.getSheets();
+  var allData = [];
+
+  sheets.forEach(function(sheet) {
+    var values = sheet.getDataRange().getValues();
+    if (values.length < 2) return; // skip empty sheets
+
+    var headers = values[0];
+
+    // Safely figure out the column index from headers
+    var dateIdx  = headers ? headers.indexOf("Date")   : 0;
+    var nameIdx  = headers ? headers.indexOf("Name")   : 1;
+    var regNoIdx = headers ? headers.indexOf("Reg No") : -1;
+    var eventIdx = headers ? headers.indexOf("Event")  : 2;
+
+    // Fallbacks just in case the sheet headers aren't perfect
+    if (dateIdx  === -1) dateIdx  = 0;
+    if (nameIdx  === -1) nameIdx  = 1;
+    if (regNoIdx === -1) regNoIdx = 2;
+    if (eventIdx === -1) eventIdx = (headers && headers.length > 3) ? 3 : 2;
+
+    for (var i = 1; i < values.length; i++) {
+      // Avoid pushing fully empty rows
+      if (!values[i][dateIdx] && !values[i][nameIdx]) continue;
+
+      // ✅ FIX: Always normalize date to "DD-MM-YYYY" string
+      var dateStr = normalizeDateStr(values[i][dateIdx]);
+      if (!dateStr) continue; // skip rows with invalid/empty dates
+
+      allData.push({
+        date:   dateStr,
+        name:   values[i][nameIdx]  || "",
+        reg_no: values[i][regNoIdx] || "",
+        event:  values[i][eventIdx] || ""
+      });
+    }
+  });
+
+  return allData;
+}
+
+// ─────────────────────────────────────────────
+// 🔧 One-time utility: format headers on ALL
+//    existing sheets. Run this manually once
+//    to fix any sheets created before this update.
+// ─────────────────────────────────────────────
+function formatAllExistingHeaders() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = ss.getSheets();
+
+  sheets.forEach(function(sheet) {
+    formatHeader(sheet);
+  });
+}

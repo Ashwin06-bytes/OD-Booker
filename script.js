@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const FLASK_API_URL = "https://od-booker.onrender.com";
 
-  const API_URL = "https://script.google.com/macros/s/AKfycbz8JBmEGJGqKuz3rEZfkPQsyndPaVcAN4K-zmJUaTdk5l4WFvgNyHLfEWML2chY9J3g9w/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbxTniQxYW2rmGKWzGd06Z_yq3TX5TydfhhQaVuvTNHeBGOu8V1LGN-bYurKqLNPFQuung/exec";
 
   const nameInput  = document.getElementById("name-input");
   const regNoInput = document.getElementById("reg-no-input");
@@ -22,6 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const selectedDate = document.getElementById("selected-date");
   const closeBtn     = document.querySelector(".close-btn");
   const popupList    = document.getElementById("popup-list");
+  const emailSection = document.getElementById("email-request-section");
+  const emailBtn1    = document.getElementById("email-btn-1");
+  const emailBtn2    = document.getElementById("email-btn-2");
 
   // Print Dropdown Elements
   const printDropdown = document.getElementById("print-dropdown");
@@ -45,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let selectedDay = null;
   let events = {};
+  let pendingSave = false; // prevents auto-sync from wiping a fresh optimistic update
 
   const date = new Date();
   let currentMonth = date.getMonth();
@@ -52,10 +56,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   
   function toDateKey(rawDate) {
-    // Handle "DD-M-YYYY" or "D-M-YYYY" string format
-    if (typeof rawDate === "string" && /^\d{1,2}-\d{1,2}-\d{4}$/.test(rawDate)) {
-      const [day, month, year] = rawDate.split("-").map(Number);
-      return `${day}-${month - 1}-${year}`;   // month is 0-indexed in keys
+    if (typeof rawDate === "string") {
+      // Handle "DD-MM-YYYY" or "D-M-YYYY" (dash-separated, our storage format)
+      if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(rawDate)) {
+        const [day, month, year] = rawDate.split("-").map(Number);
+        return `${day}-${month - 1}-${year}`; // month is 0-indexed in keys
+      }
+      // Handle "DD/MM/YYYY" or "D/M/YYYY" (slash-separated, some GAS locales)
+      // ⚠️ Must NOT use new Date() here — browser treats "8/6/2026" as Aug 6 (MM/DD),
+      //    but GAS may return it as D/M meaning June 8. Parse manually to be safe.
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(rawDate)) {
+        const [day, month, year] = rawDate.split("/").map(Number);
+        return `${day}-${month - 1}-${year}`;
+      }
     }
     const d = new Date(rawDate);
     if (isNaN(d)) return null;
@@ -89,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // 🔧 FIX 3: loadEvents with cache-busting
   // ─────────────────────────────────────────────
   async function loadEvents() {
+    if (pendingSave) return; // ✅ don't overwrite optimistic update mid-save
     try {
       const res  = await fetch(API_URL + "?t=" + Date.now());
       const data = await res.json();
@@ -207,17 +221,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (selectedDateObj < today) { alert("Cannot book past dates"); return; }
 
     selectedDay = `${dayValue}-${currentMonth}-${currentYear}`;
-    selectedDate.innerText = `${dayValue} ${months[currentMonth]} ${currentYear}`;
+    const dateLabel = `${dayValue} ${months[currentMonth]} ${currentYear}`;
+    selectedDate.innerText = dateLabel;
 
     // Refresh popup list
     popupList.innerHTML = "";
-    if (events[selectedDay] && events[selectedDay].length > 0) {
+    const count = events[selectedDay] ? events[selectedDay].length : 0;
+
+    if (count > 0) {
       events[selectedDay].forEach(item => {
         popupList.innerHTML +=
           `<div class="popup-entry"><b>${item.name}</b> — ${item.event}</div>`;
       });
       popupList.innerHTML +=
-        `<p class="slot-count">${events[selectedDay].length}/${MAX_SLOTS} slots filled</p>`;
+        `<p class="slot-count">${count}/${MAX_SLOTS} slots filled</p>`;
     } else {
       popupList.innerHTML = `<p class="slot-count">0/${MAX_SLOTS} — Be the first to book!</p>`;
     }
@@ -226,6 +243,14 @@ document.addEventListener("DOMContentLoaded", () => {
     nameInput.value  = "";
     regNoInput.value = "";
     eventInput.value = "";
+
+    // Show/hide email section based on whether day is fully booked
+    const isFull = count >= MAX_SLOTS;
+    emailSection.style.display = isFull ? "block" : "none";
+    saveBtn.style.display      = isFull ? "none"  : "block";
+
+    // Build mailto links (will update live as user types)
+    updateEmailLinks(dateLabel);
 
     popup.style.display = "flex";
   });
@@ -240,13 +265,28 @@ document.addEventListener("DOMContentLoaded", () => {
   //  but we can't read the response. That's fine —
   //  we wait 1.5s then re-fetch (GET) to confirm.
   // ─────────────────────────────────────────────
+  // ── REG NO: block non-digits at the keyboard level ─────────
+  regNoInput.addEventListener("keydown", (e) => {
+    // Allow: backspace, delete, tab, arrows, home, end
+    const allowed = ["Backspace","Delete","Tab","ArrowLeft","ArrowRight","Home","End"];
+    if (allowed.includes(e.key)) return;
+    // Block anything that isn't a digit 0–9
+    if (!/^\d$/.test(e.key)) e.preventDefault();
+  });
+
+  // Also strip on paste (in case user pastes text)
+  regNoInput.addEventListener("input", () => {
+    regNoInput.value = regNoInput.value.replace(/\D/g, "").slice(0, 11);
+  });
+
   saveBtn.onclick = async () => {
     const name      = nameInput.value.trim();
     const regNo     = regNoInput.value.trim();
     const eventText = eventInput.value.trim();
 
     if (!name || !regNo || !eventText) { alert("Please fill in all fields."); return; }
-    if (!selectedDay)        { alert("Select a date first.");        return; }
+    if (!/^\d{11}$/.test(regNo))       { alert("Register No must be exactly 11 digits."); return; }
+    if (!selectedDay)                  { alert("Select a date first."); return; }
 
     // Frontend duplicate / full check
     if (events[selectedDay]) {
@@ -254,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e => e.name.toLowerCase() === name.toLowerCase()
       );
       if (exists) { alert("You are already booked on this date!"); return; }
-      if (events[selectedDay].length >= MAX_SLOTS) { alert("This day is fully booked!"); return; }
+      if (events[selectedDay].length >= MAX_SLOTS) { return; } // email section shown instead
     }
 
     saveBtn.disabled    = true;
@@ -264,10 +304,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const dateStr   = toSheetDate(parseInt(d), parseInt(m), parseInt(y));
 
     try {
-      // ✅ FIX: Use GET with query parameters instead of POST.
-      //    Google Apps Script supports CORS for GET (the redirect
-      //    to googleusercontent.com includes CORS headers) but
-      //    NOT for POST — which is why POST saves were failing.
       const saveUrl = `${API_URL}?action=save`
         + `&date=${encodeURIComponent(dateStr)}`
         + `&name=${encodeURIComponent(name)}`
@@ -276,26 +312,35 @@ document.addEventListener("DOMContentLoaded", () => {
         + `&month=${encodeURIComponent(months[parseInt(m)])}`
         + `&year=${encodeURIComponent(y)}`;
 
-      const res    = await fetch(saveUrl);
-      const result = await res.json();
+      const res = await fetch(saveUrl);
 
-      if (result.status === "duplicate") {
+      // Parse JSON separately — GAS sometimes returns an HTML error page
+      // instead of JSON. We must NOT let a JSON parse failure block the
+      // optimistic UI update (the data was likely saved despite the bad response).
+      let result = null;
+      try { result = await res.json(); } catch (_) { /* non-JSON response, ignore */ }
+
+      if (result && result.status === "duplicate") {
         alert("You are already booked on this date!");
         saveBtn.disabled    = false;
         saveBtn.textContent = "Save";
         return;
       }
 
-      // ✅ Optimistic UI update — add entry locally so it appears
-      //    on the calendar immediately without waiting for a re-fetch
+      // ✅ Optimistic UI update — always runs as long as the network
+      //    request itself succeeded (no fetch-level error thrown above).
       if (!events[selectedDay]) events[selectedDay] = [];
       events[selectedDay].push({ name, event: eventText });
       renderCalendar();
-
       popup.style.display = "none";
 
-      // Background sync to confirm the sheet write succeeded
-      setTimeout(() => loadEvents(), 3000);
+      // Block auto-sync for 6s so it doesn't overwrite the optimistic update,
+      // then do a single explicit reload to confirm the sheet write.
+      pendingSave = true;
+      setTimeout(() => {
+        pendingSave = false;
+        loadEvents();
+      }, 6000);
 
     } catch (err) {
       console.error("Save error:", err);
@@ -431,8 +476,36 @@ document.addEventListener("DOMContentLoaded", () => {
   // AUTO SYNC every 10 seconds
   setInterval(loadEvents, 10000);
 
-  // 🚀 INIT
+  // 🚀 INIT — render calendar immediately so it's visible on load,
+  // then load events from API (will re-render with booking data)
+  renderCalendar();
   loadEvents();
+
+  // ─────────────────────────────────────────────
+  // 📧 BUILD MAILTO LINKS (Gmail with pre-filled subject + body)
+  // ─────────────────────────────────────────────
+  function updateEmailLinks(dateLabel) {
+    const name  = nameInput.value.trim()  || "[Your Name]";
+    const regNo = regNoInput.value.trim() || "[Your Register No]";
+    const event = eventInput.value.trim() || "[Event Name]";
+
+    const subject = encodeURIComponent(`OD Request for ${dateLabel}`);
+    const body    = encodeURIComponent(
+      `Name: ${name}\nRegister No: ${regNo}\nEvent: ${event}\nDate: ${dateLabel}\n\nPlease consider my request for OD on the above date. Thank you.`
+    );
+
+    emailBtn1.href = `https://mail.google.com/mail/?view=cm&to=25cb049@drngpit.ac.in&su=${subject}&body=${body}`;
+    emailBtn2.href = `https://mail.google.com/mail/?view=cm&to=25cb004@drngpit.ac.in&su=${subject}&body=${body}`;
+  }
+
+  // Update email links live as user types in the inputs
+  [nameInput, regNoInput, eventInput].forEach(input => {
+    input.addEventListener("input", () => {
+      if (emailSection.style.display !== "none") {
+        updateEmailLinks(selectedDate.innerText);
+      }
+    });
+  });
 
   closeBtn.onclick = () => popup.style.display = "none";
 });

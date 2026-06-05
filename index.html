@@ -118,10 +118,27 @@
 
       <!-- INPUTS -->
       <input type="text" id="name-input" placeholder="Enter name" />
-      <input type="text" id="reg-no-input" placeholder="Enter Register No" />
-      <input type="text" id="event-input" placeholder="Enter event" />
+      <input type="tel" id="reg-no-input" placeholder="Enter Register No" inputmode="numeric" pattern="[0-9]{11}" maxlength="11" />
+      <input type="text" id="event-input" placeholder="Enter event with college name if outside" />
 
       <button id="save-btn">Save</button>
+
+      <!-- EMAIL REQUEST — shown when date is fully booked -->
+      <div id="email-request-section" style="display:none;">
+        <div class="full-notice">
+          <span class="full-icon">⚠️</span>
+          <strong>This date is fully booked!</strong>
+        </div>
+        <p class="full-sub">Fill in your details above, then tap an email below to send your OD request:</p>
+        <a id="email-btn-1" class="email-link-btn" href="#" target="_blank" rel="noopener">
+          <i class="fas fa-envelope"></i> 25cb049@drngpit.ac.in
+        </a>
+        <p class="email-or">or</p>
+        <a id="email-btn-2" class="email-link-btn" href="#" target="_blank" rel="noopener">
+          <i class="fas fa-envelope"></i> 25cb004@drngpit.ac.in
+        </a>
+      </div>
+
     </div>
   </div>
 
