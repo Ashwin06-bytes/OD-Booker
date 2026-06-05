@@ -494,8 +494,12 @@ document.addEventListener("DOMContentLoaded", () => {
       `Name: ${name}\nRegister No: ${regNo}\nEvent: ${event}\nDate: ${dateLabel}\n\nPlease consider my request for OD on the above date. Thank you.`
     );
 
-    emailBtn1.href = `https://mail.google.com/mail/?view=cm&to=25cb049@drngpit.ac.in&su=${subject}&body=${body}`;
-    emailBtn2.href = `https://mail.google.com/mail/?view=cm&to=25cb004@drngpit.ac.in&su=${subject}&body=${body}`;
+    emailBtn1.href = `mailto:25cb049@drngpit.ac.in?subject=${subject}&body=${body}`;
+    emailBtn2.href = `mailto:25cb004@drngpit.ac.in?subject=${subject}&body=${body}`;
+
+    // Remove target="_blank" so mailto doesn't leave an empty blank browser tab behind
+    emailBtn1.removeAttribute("target");
+    emailBtn2.removeAttribute("target");
   }
 
   // Update email links live as user types in the inputs
