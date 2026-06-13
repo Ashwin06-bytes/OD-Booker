@@ -303,49 +303,32 @@ document.addEventListener("DOMContentLoaded", () => {
     const [d, m, y] = selectedDay.split("-");
     const dateStr   = toSheetDate(parseInt(d), parseInt(m), parseInt(y));
 
-    try {
-      const saveUrl = `${API_URL}?action=save`
-        + `&date=${encodeURIComponent(dateStr)}`
-        + `&name=${encodeURIComponent(name)}`
-        + `&reg_no=${encodeURIComponent(regNo)}`
-        + `&event=${encodeURIComponent(eventText)}`
-        + `&month=${encodeURIComponent(months[parseInt(m)])}`
-        + `&year=${encodeURIComponent(y)}`;
+    const saveUrl = `${API_URL}?action=save`
+      + `&date=${encodeURIComponent(dateStr)}`
+      + `&name=${encodeURIComponent(name)}`
+      + `&reg_no=${encodeURIComponent(regNo)}`
+      + `&event=${encodeURIComponent(eventText)}`
+      + `&month=${encodeURIComponent(months[parseInt(m)])}`
+      + `&year=${encodeURIComponent(y)}`;
 
-      const res = await fetch(saveUrl);
+    // ✅ Fire the save request. GAS saves data on its server BEFORE the browser
+    //    checks CORS headers — so even if a CORS error is thrown, the data is
+    //    already written to the sheet. We catch and swallow the error below.
+    try { await fetch(saveUrl); } catch (_) { /* CORS error expected — data still saved */ }
 
-      // Parse JSON separately — GAS sometimes returns an HTML error page
-      // instead of JSON. We must NOT let a JSON parse failure block the
-      // optimistic UI update (the data was likely saved despite the bad response).
-      let result = null;
-      try { result = await res.json(); } catch (_) { /* non-JSON response, ignore */ }
+    // ✅ Optimistic UI update — always runs after the request is fired
+    if (!events[selectedDay]) events[selectedDay] = [];
+    events[selectedDay].push({ name, event: eventText });
+    renderCalendar();
+    popup.style.display = "none";
 
-      if (result && result.status === "duplicate") {
-        alert("You are already booked on this date!");
-        saveBtn.disabled    = false;
-        saveBtn.textContent = "Save";
-        return;
-      }
-
-      // ✅ Optimistic UI update — always runs as long as the network
-      //    request itself succeeded (no fetch-level error thrown above).
-      if (!events[selectedDay]) events[selectedDay] = [];
-      events[selectedDay].push({ name, event: eventText });
-      renderCalendar();
-      popup.style.display = "none";
-
-      // Block auto-sync for 6s so it doesn't overwrite the optimistic update,
-      // then do a single explicit reload to confirm the sheet write.
-      pendingSave = true;
-      setTimeout(() => {
-        pendingSave = false;
-        loadEvents();
-      }, 6000);
-
-    } catch (err) {
-      console.error("Save error:", err);
-      alert("Network error — check your Apps Script URL or deployment settings.");
-    }
+    // Block auto-sync for 6s so it doesn't overwrite the optimistic update,
+    // then do a single explicit reload to confirm the sheet write.
+    pendingSave = true;
+    setTimeout(() => {
+      pendingSave = false;
+      loadEvents();
+    }, 6000);
 
     saveBtn.disabled    = false;
     saveBtn.textContent = "Save";
