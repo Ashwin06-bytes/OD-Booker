@@ -139,11 +139,11 @@ function saveData(data) {
   //    which never matched "08-06-2026", so duplicates always slipped through.
   for (var i = 1; i < values.length; i++) {
     var cellDateStr = normalizeDateStr(values[i][0]);
-    if (
-      cellDateStr === String(data.date) &&
-      String(values[i][1]).toLowerCase() === String(data.name).toLowerCase()
-    ) {
-      return { status: "duplicate" };
+    var cellName    = String(values[i][1]).toLowerCase();
+    var cellRegNo   = String(values[i][2]).toLowerCase();
+    if (cellDateStr === String(data.date)) {
+      if (cellName   === String(data.name).toLowerCase())   return { status: "duplicate" };
+      if (cellRegNo  === String(data.reg_no).toLowerCase()) return { status: "duplicate" };
     }
   }
 

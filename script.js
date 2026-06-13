@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const FLASK_API_URL = "https://od-booker.onrender.com";
 
-  const API_URL = "https://script.google.com/macros/s/AKfycbxTniQxYW2rmGKWzGd06Z_yq3TX5TydfhhQaVuvTNHeBGOu8V1LGN-bYurKqLNPFQuung/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbzXhgbAV8rnRTU9Bd6vTMMwDrzyQ7q2pqPD7HRJtsnBKcYppJy3b8D8P6jzXMUjIEOv4Q/exec";
 
   const nameInput  = document.getElementById("name-input");
   const regNoInput = document.getElementById("reg-no-input");
@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const key = toDateKey(item.date);
       if (!key) return;
       if (!obj[key]) obj[key] = [];
-      obj[key].push({ name: item.name, event: item.event });
+      obj[key].push({ name: item.name, reg_no: item.reg_no || "", event: item.event });
     });
     return obj;
   }
@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Also strip on paste (in case user pastes text)
   regNoInput.addEventListener("input", () => {
-    regNoInput.value = regNoInput.value.replace(/\D/g, "").slice(0, 11);
+    regNoInput.value = regNoInput.value.replace(/\D/g, "").slice(0, 12);
   });
 
   saveBtn.onclick = async () => {
@@ -285,15 +285,35 @@ document.addEventListener("DOMContentLoaded", () => {
     const eventText = eventInput.value.trim();
 
     if (!name || !regNo || !eventText) { alert("Please fill in all fields."); return; }
-    if (!/^\d{11}$/.test(regNo))       { alert("Register No must be exactly 11 digits."); return; }
     if (!selectedDay)                  { alert("Select a date first."); return; }
 
-    // Frontend duplicate / full check
+    // Validate reg no: must be exactly 12 digits, start with 710725244,
+    // and the last 3 digits must be between 001 and 070
+    const PREFIX = "710725244";
+    if (!/^\d{12}$/.test(regNo)) {
+      alert("Register No must be exactly 12 digits (e.g. 710725244001).");
+      return;
+    }
+    if (!regNo.startsWith(PREFIX)) {
+      alert(`Register No must start with ${PREFIX}.`);
+      return;
+    }
+    const suffix = parseInt(regNo.slice(9), 10);
+    if (suffix < 1 || suffix > 70) {
+      alert("Last 3 digits of Register No must be between 001 and 070.");
+      return;
+    }
+
+    // Frontend duplicate / full check — name OR reg no match (case-insensitive)
     if (events[selectedDay]) {
-      const exists = events[selectedDay].some(
+      const nameDup  = events[selectedDay].some(
         e => e.name.toLowerCase() === name.toLowerCase()
       );
-      if (exists) { alert("You are already booked on this date!"); return; }
+      const regDup   = events[selectedDay].some(
+        e => e.reg_no && e.reg_no.toLowerCase() === regNo.toLowerCase()
+      );
+      if (nameDup)  { alert("This name is already booked on this date!"); return; }
+      if (regDup)   { alert("This Register No is already booked on this date!"); return; }
       if (events[selectedDay].length >= MAX_SLOTS) { return; } // email section shown instead
     }
 
@@ -311,16 +331,17 @@ document.addEventListener("DOMContentLoaded", () => {
       + `&month=${encodeURIComponent(months[parseInt(m)])}`
       + `&year=${encodeURIComponent(y)}`;
 
-    // ✅ Fire the save request. GAS saves data on its server BEFORE the browser
-    //    checks CORS headers — so even if a CORS error is thrown, the data is
-    //    already written to the sheet. We catch and swallow the error below.
-    try { await fetch(saveUrl); } catch (_) { /* CORS error expected — data still saved */ }
-
-    // ✅ Optimistic UI update — always runs after the request is fired
+    // ✅ Optimistic UI update FIRST — closes popup instantly so user gets immediate feedback
     if (!events[selectedDay]) events[selectedDay] = [];
-    events[selectedDay].push({ name, event: eventText });
+    events[selectedDay].push({ name, reg_no: regNo, event: eventText });
     renderCalendar();
     popup.style.display = "none";
+    saveBtn.disabled    = false;
+    saveBtn.textContent = "Save";
+
+    // 🔥 Fire fetch in background (no await) — GAS saves data server-side.
+    //    CORS error is expected and swallowed; data is still written to the sheet.
+    fetch(saveUrl).catch(() => {});
 
     // Block auto-sync for 6s so it doesn't overwrite the optimistic update,
     // then do a single explicit reload to confirm the sheet write.
@@ -329,9 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
       pendingSave = false;
       loadEvents();
     }, 6000);
-
-    saveBtn.disabled    = false;
-    saveBtn.textContent = "Save";
   };
 
   // ─────────────────────────────────────────────
