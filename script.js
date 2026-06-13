@@ -310,7 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e => e.name.toLowerCase() === name.toLowerCase()
       );
       const regDup   = events[selectedDay].some(
-        e => e.reg_no && e.reg_no.toLowerCase() === regNo.toLowerCase()
+        e => e.reg_no && String(e.reg_no) === regNo
       );
       if (nameDup)  { alert("This name is already booked on this date!"); return; }
       if (regDup)   { alert("This Register No is already booked on this date!"); return; }
