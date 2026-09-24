@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  const MAX_SLOTS = 5;
+  const MAX_SLOTS = 10;
 
   const FLASK_API_URL = "https://od-booker.onrender.com";
 
@@ -299,10 +299,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     const suffix = parseInt(regNo.slice(9), 10);
-    if (suffix < 1 || suffix > 70) {
-      alert("Last 3 digits of Register No must be between 001 and 070.");
-      return;
-    }
+    if ((suffix < 1 || suffix > 64) && suffix !== 301) {
+    alert("Last 3 digits of Register No must be between 001 and 065, or 301.");
+    return;
+}
 
     // Frontend duplicate / full check — name OR reg no match (case-insensitive)
     if (events[selectedDay]) {
